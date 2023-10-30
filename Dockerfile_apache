@@ -1,0 +1,57 @@
+# Utilisez une image de base contenant PHP 8.1 avec Apache
+FROM php:8.1-apache
+
+# Mise à jour des paquets et installation de Git
+RUN apt-get update && apt-get install -y git
+
+# Installer le module exif PHP
+RUN docker-php-ext-install exif
+
+# Installer les packages nécessaires pour GD, libwebp, Imagick, zip et libzip
+RUN apt-get update && apt-get install -y libpng-dev libjpeg-dev libfreetype6-dev libwebp-dev libmagickwand-dev libzip-dev zip
+
+# Installer Nginx (assurez-vous que vous voulez vraiment Nginx et non Apache)
+# RUN apt-get install -y nginx
+
+# Configurer et installer GD pour PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
+RUN docker-php-ext-install -j$(nproc) gd pdo_mysql zip
+
+# Installer l'extension Imagick
+RUN apt-get install -y libtool
+RUN apt-get install -y libmagickwand-dev
+RUN pecl install imagick
+RUN docker-php-ext-enable imagick
+
+# Cloner le dépôt Git
+RUN git clone https://github.com/atrocore/skeleton-dam.git /var/www/my-atrocore-project
+
+# Se déplacer dans le répertoire du projet
+WORKDIR /var/www/my-atrocore-project
+
+# Mettre à jour Composer
+RUN php composer.phar self-update
+
+# Installer les dépendances du projet
+RUN php composer.phar update
+
+# Assurer que les fichiers appartiennent à l'utilisateur www-data
+RUN chown -R www-data:www-data /var/www/my-atrocore-project
+
+# Attribution des droits à l'utilisateur www-data
+RUN find . -type d -exec chmod 755 {} + && find . -type f -exec chmod 644 {} +
+RUN find client data custom upload -type d -exec chmod 775 {} + && find client data custom upload -type f -exec chmod 664 {} +
+
+# Installer cron (crontab)
+RUN apt-get install -y cron
+# Configuration de la tâche cron pour www-data
+RUN echo "* * * * * /usr/bin/php /var/www/my-atrocore-project/index.php cron" | crontab -u www-data -
+
+COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
+COPY uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+RUN a2enmod rewrite
+
+# Exposer le port 80
+EXPOSE 80
+
+CMD ["apache2-foreground"]
