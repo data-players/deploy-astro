@@ -24,7 +24,7 @@ RUN pecl install imagick
 RUN docker-php-ext-enable imagick
 
 # Cloner le dépôt Git
-RUN git clone https://github.com/atrocore/skeleton-dam.git /var/www/my-atrocore-project
+RUN git clone https://github.com/atrocore/skeleton-pim-no-demo.git /var/www/my-atrocore-project
 
 # Se déplacer dans le répertoire du projet
 WORKDIR /var/www/my-atrocore-project

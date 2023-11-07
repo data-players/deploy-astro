@@ -7,6 +7,9 @@ services:
       dockerfile: Dockerfile_apache
     ports:
       - "80:80"
+    volumes:
+      - ./data_uploads:/var/www/my-atrocore-project/upload/files
+      - ./data_thumbnails:/var/www/my-atrocore-project/upload/thumbnails
 
   db:
     image: mysql
@@ -21,6 +24,8 @@ services:
       MYSQL_PASSWORD: atrocore_password
     ports:
       - "3306"
+    volumes:
+      - ./data_db:/var/lib/mysql
     
   adminer:
     image: adminer
